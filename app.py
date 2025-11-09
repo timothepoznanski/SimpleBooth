@@ -734,31 +734,8 @@ def generate_video_stream():
         # Arrêter tout processus caméra existant
         stop_camera_process()
         
-        # Mode test - utiliser une image statique
-        if camera_type == 'test':
-            logger.info("[CAMERA] Mode test - utilisation d'une image statique...")
-            test_image_path = 'static/test_frame.jpg'
-            
-            if os.path.exists(test_image_path):
-                with open(test_image_path, 'rb') as f:
-                    test_frame = f.read()
-                
-                # Stocker la frame de test pour capture
-                with frame_lock:
-                    last_frame = test_frame
-                
-                # Envoyer la frame de test en boucle
-                while True:
-                    yield (b'--frame\r\n'
-                           b'Content-Type: image/jpeg\r\n'
-                           b'Content-Length: ' + str(len(test_frame)).encode() + b'\r\n\r\n' +
-                           test_frame + b'\r\n')
-                    time.sleep(0.1)  # Rafraîchir toutes les 100ms
-            else:
-                raise Exception("Image de test introuvable")
-        
         # Utiliser la caméra USB si configurée
-        elif camera_type == 'usb':
+        if camera_type == 'usb':
             logger.info("[CAMERA] Démarrage de la caméra USB...")
             camera_id = config.get('usb_camera_id', 0)
             usb_camera = UsbCamera(camera_id=camera_id)
