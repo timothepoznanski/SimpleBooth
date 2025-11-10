@@ -1,12 +1,10 @@
 # 📸 Photobooth Raspberry Pi
 
-> **Application Flask pour photobooth tactile avec flux vidéo temps réel, capture instantanée, effets IA et intégration Telegram**
+> **Application Flask pour photobooth tactile avec flux vidéo temps réel et capture instantanée**
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
 ![Flask](https://img.shields.io/badge/Flask-2.3.3-green.svg)
 ![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-Compatible-red.svg)
-![Runware](https://img.shields.io/badge/Runware%20AI-Intégré-purple.svg)
-![Telegram](https://img.shields.io/badge/Telegram-Bot-blue.svg)
 ![OpenCV](https://img.shields.io/badge/OpenCV-Support%20USB-brightgreen.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
@@ -17,9 +15,7 @@ Cette application transforme votre Raspberry Pi en un photobooth professionnel a
 - **Support multi-caméras** : Pi Camera ou caméra USB
 - **Interface tactile optimisée** pour écran 7 pouces
 - **Capture photo instantanée** directement depuis le flux vidéo
-- **Effets IA** via l'API Runware pour transformer vos photos
 - **Diaporama automatique** configurable après période d'inactivité
-- **Bot Telegram** pour envoi automatique des photos sur un groupe/canal
 - **Impression thermique** avec texte personnalisable
 - **Interface d'administration** complète
 
@@ -151,7 +147,6 @@ SimpleBooth/
 ├── app.py                 # Application Flask principale (routes, logique)
 ├── camera_utils.py        # Utilitaires pour la gestion des caméras (Pi Camera, USB)
 ├── config_utils.py        # Utilitaires pour charger/sauvegarder la configuration
-├── telegram_utils.py      # Utilitaires pour l'envoi de messages via le bot Telegram
 ├── ScriptPythonPOS.py     # Script autonome pour l'impression thermique
 ├── setup.sh               # Script d'installation automatisée pour Raspberry Pi
 ├── requirements.txt       # Dépendances Python
@@ -187,47 +182,8 @@ La configuration est sauvegardée dans `config.json` :
 - `effect_steps` : Nombre d'étapes de génération IA (1-50, plus = meilleure qualité mais plus lent)
 - `runware_api_key` : Clé API Runware pour l'accès au service IA
 
-### Bot Telegram
-- `telegram_enabled` : Activer/désactiver le bot Telegram
-- `telegram_bot_token` : Token du bot obtenu via @BotFather
-- `telegram_chat_id` : ID du chat/groupe/canal de destination
-- `telegram_send_type` : Type de photos à envoyer ('photos', 'effet' ou 'both')
-
-
-## Configuration du bot Telegram
-
-1. **Créer un bot** : 
-   - Contactez [@BotFather](https://t.me/BotFather) sur Telegram
-   - Envoyez `/newbot` et suivez les instructions
-   - Notez le token fourni (format: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`)
-
-2. **Obtenir l'ID du chat** :
-   
-   Pour un chat privé :
-   - Envoyez un message à [@userinfobot](https://t.me/userinfobot) pour obtenir votre ID
-   
-   Pour un groupe :
-   - Ajoutez le bot au groupe d'abord!
-   - ID format: `-123456789` (notez le signe négatif)
-   - Utilisez [@GroupIDbot](https://t.me/GroupIDbot) pour trouver l'ID
-   
-   Pour un canal :
-   - Ajoutez le bot comme administrateur du canal
-   - Format canal public: `@nom_du_canal`
-   - Format canal privé: `-100123456789`
-
-3. **Configurer dans l'admin** :
-   - Activez l'option Telegram
-   - Entrez le token du bot et l'ID du chat
-   - Choisissez le type de photos à envoyer (originales, effet, ou les deux)
-
 ## Dépannage
 
 - **Caméra non détectée** : Vérifier que la caméra est activée dans `raspi-config`
 - **Erreur d'impression** : Vérifier la connexion de l'imprimante thermique et TX/RX
-- **Effets IA ne fonctionnent pas** : Vérifier la validité de la clé API Runware
-- **"Chat not found" dans Telegram** : 
-  - Vérifier que le bot est bien membre du groupe/canal
-  - Format correct de l'ID (numérique pour privé, commence par `-` pour groupe)
-  - Le bot doit être admin pour les canaux
 - **Dossier effet manquant** : L'application le crée automatiquement au démarrage

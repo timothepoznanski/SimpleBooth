@@ -19,7 +19,6 @@ from config_utils import (
     ensure_directories,
 )
 from camera_utils import UsbCamera, detect_cameras
-from telegram_utils import send_to_telegram
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'photobooth_secret_key_2024')
@@ -181,11 +180,6 @@ def capture_photo():
                     current_photo = filename
                     logger.info(f"Photo Pi Camera capturée avec succès: {filename}")
                     
-                    # Envoyer sur Telegram si activé
-                    send_type = config.get('telegram_send_type', 'photos')
-                    if send_type in ['photos', 'both']:
-                        threading.Thread(target=send_to_telegram, args=(filepath, config, "photo")).start()
-                    
                     return jsonify({'success': True, 'filename': filename})
                 else:
                     raise Exception(f"Échec rpicam-still: {result.stderr}")
@@ -203,11 +197,6 @@ def capture_photo():
                 
                 current_photo = filename
                 logger.info(f"Frame MJPEG capturée avec succès: {filename}")
-                
-                # Envoyer sur Telegram si activé
-                send_type = config.get('telegram_send_type', 'photos')
-                if send_type in ['photos', 'both']:
-                    threading.Thread(target=send_to_telegram, args=(filepath, config, "photo")).start()
                 
                 return jsonify({'success': True, 'filename': filename})
             else:
@@ -372,10 +361,6 @@ def save_admin_config():
         config['slideshow_delay'] = int(slideshow_delay) if slideshow_delay else 60
         
         config['slideshow_source'] = request.form.get('slideshow_source', 'photos')
-        config['telegram_enabled'] = 'telegram_enabled' in request.form
-        config['telegram_bot_token'] = request.form.get('telegram_bot_token', '')
-        config['telegram_chat_id'] = request.form.get('telegram_chat_id', '')
-        config['telegram_send_type'] = request.form.get('telegram_send_type', 'photos')
         
         # Configuration de la caméra
         config['camera_type'] = request.form.get('camera_type', 'picamera')

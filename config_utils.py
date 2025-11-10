@@ -14,10 +14,7 @@ DEFAULT_CONFIG = {
     'slideshow_delay': 60,
     'slideshow_source': 'photos',
 
-    'telegram_enabled': False,
-    'telegram_bot_token': '',
-    'telegram_chat_id': '',
-    'telegram_send_type': 'photos',
+
     'camera_type': 'picamera',
     'usb_camera_id': 0,
     'printer_enabled': True,
