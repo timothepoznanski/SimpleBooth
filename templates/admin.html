@@ -371,7 +371,7 @@
                         <div class="d-grid gap-2">
                             <button type="button" class="btn btn-danger btn-lg" onclick="shutdownApplication()">
                                 <i class="fas fa-power-off me-2"></i>
-                                Arrêter l'Application
+                                Quitter le Mode Kiosk
                             </button>
                             
                             <button type="button" class="btn btn-success btn-lg" onclick="restartApplication()">
@@ -1009,7 +1009,7 @@ function restartApplication() {
 }
 
 function shutdownApplication() {
-    if (!confirm('Êtes-vous sûr de vouloir arrêter SimpleBooth ?\n\nL\'application redémarrera automatiquement au prochain reboot.')) {
+    if (!confirm('Êtes-vous sûr de vouloir arrêter le mode kiosk ?\n\nL\'application restera accessible sur cette page d\'administration.')) {
         return;
     }
     
@@ -1021,14 +1021,12 @@ function shutdownApplication() {
     })
     .then(response => response.json())
     .then(data => {
-        alert('✅ SimpleBooth arrêté.\n\nL\'application redémarrera automatiquement au prochain reboot.');
+        alert('✅ Mode kiosk arrêté.\n\nVous pouvez redémarrer le kiosk depuis l\'onglet "Contrôles Système" ci-dessous.');
         
-        // Optionnel: fermer l'onglet après quelques secondes
+        // Recharger la page pour actualiser les statuts
         setTimeout(() => {
-            if (confirm('Voulez-vous fermer cette page ?')) {
-                window.close();
-            }
-        }, 3000);
+            window.location.reload();
+        }, 2000);
     })
     .catch(error => {
         console.error('Erreur lors de l\'arrêt:', error);

@@ -283,22 +283,17 @@
         if (!btn) return;
         btn.addEventListener('click', function(e) {
             e.preventDefault();
-            if (!confirm('Quitter SimpleBooth et revenir au bureau ?')) return;
+            if (!confirm('Sortir du mode plein écran ?\n\nLa fenêtre sera réduite et vous pourrez accéder au bureau.')) return;
 
-            // Appel à l'API pour arrêter l'application
-            fetch('/admin/shutdown', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            })
-            .then(function(response) {
-                // On tente de fermer la fenêtre; si impossible, on laisse le desktop visible
-                setTimeout(function() {
-                    try { window.close(); } catch (e) { /* ignore */ }
-                }, 500);
-            })
-            .catch(function() {
-                try { window.close(); } catch (e) { /* ignore */ }
-            });
+            // Sortir du mode plein écran
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+            
+            // Message d'information après un délai
+            setTimeout(function() {
+                alert('Mode plein écran désactivé.\n\nPour l\'administration: http://localhost:5000/admin');
+            }, 500);
         });
     });
     </script>

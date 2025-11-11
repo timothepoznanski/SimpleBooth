@@ -782,18 +782,28 @@ def kiosk_control():
 
 @app.route('/admin/shutdown', methods=['POST'])
 def shutdown_application():
-    """Arrêter complètement l'application (mais garder le service activé pour redémarrage automatique)"""
+    """Arrêter le mode kiosk mais garder l'application Python active"""
     try:
         # Arrêter le service kiosk (mais ne pas le désactiver)
         subprocess.run(['sudo', 'systemctl', 'stop', 'simplebooth-kiosk.service'], check=False)
-        # Arrêter Chromium
-        subprocess.run(['sudo', 'pkill', '-f', 'chromium'], check=False)
-        # Arrêter tous les processus Python de l'app
-        subprocess.run(['sudo', 'pkill', '-f', 'python.*app.py'], check=False)
+        
+        # Essayer d'abord une fermeture plus douce de Chromium
+        try:
+            # Utiliser SIGTERM au lieu de SIGKILL pour une fermeture propre
+            subprocess.run(['sudo', 'pkill', '-TERM', '-f', 'chromium'], check=False, timeout=3)
+            # Attendre un peu pour que Chromium se ferme proprement
+            time.sleep(1)
+        except:
+            pass
+        
+        # Si Chromium ne s'est pas fermé, forcer avec SIGKILL
+        subprocess.run(['sudo', 'pkill', '-KILL', '-f', 'chromium'], check=False)
+        
+        # On ne tue PAS le processus Python - l'app reste accessible
         
         return jsonify({
             'status': 'success',
-            'message': 'Application arrêtée. Elle redémarrera automatiquement au prochain reboot.'
+            'message': 'Mode kiosk arrêté. L\'application reste accessible sur http://localhost:5000/admin'
         })
         
     except Exception as e:
