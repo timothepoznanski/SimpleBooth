@@ -1009,7 +1009,7 @@ function restartApplication() {
 }
 
 function shutdownApplication() {
-    if (!confirm('Êtes-vous sûr de vouloir arrêter SimpleBooth ?\n\nCela fermera complètement l\'application. Vous devrez la redémarrer manuellement.')) {
+    if (!confirm('Êtes-vous sûr de vouloir arrêter SimpleBooth ?\n\nL\'application redémarrera automatiquement au prochain reboot.')) {
         return;
     }
     
@@ -1021,7 +1021,7 @@ function shutdownApplication() {
     })
     .then(response => response.json())
     .then(data => {
-        alert('✅ SimpleBooth arrêté.\n\nVous pouvez fermer cette page et utiliser le raccourci bureau pour redémarrer.');
+        alert('✅ SimpleBooth arrêté.\n\nL\'application redémarrera automatiquement au prochain reboot.');
         
         // Optionnel: fermer l'onglet après quelques secondes
         setTimeout(() => {

@@ -782,11 +782,10 @@ def kiosk_control():
 
 @app.route('/admin/shutdown', methods=['POST'])
 def shutdown_application():
-    """Arrêter complètement l'application"""
+    """Arrêter complètement l'application (mais garder le service activé pour redémarrage automatique)"""
     try:
-        # Arrêter le service kiosk
+        # Arrêter le service kiosk (mais ne pas le désactiver)
         subprocess.run(['sudo', 'systemctl', 'stop', 'simplebooth-kiosk.service'], check=False)
-        subprocess.run(['sudo', 'systemctl', 'disable', 'simplebooth-kiosk.service'], check=False)
         # Arrêter Chromium
         subprocess.run(['sudo', 'pkill', '-f', 'chromium'], check=False)
         # Arrêter tous les processus Python de l'app
@@ -794,7 +793,7 @@ def shutdown_application():
         
         return jsonify({
             'status': 'success',
-            'message': 'Application arrêtée complètement.'
+            'message': 'Application arrêtée. Elle redémarrera automatiquement au prochain reboot.'
         })
         
     except Exception as e:
