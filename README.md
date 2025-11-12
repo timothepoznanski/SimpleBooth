@@ -12,22 +12,25 @@
 
 Cette application transforme votre Raspberry Pi en un photobooth professionnel avec :
 - **Flux vidéo temps réel** en MJPEG 1280x720 (16:9)
-- **Support multi-caméras** : Pi Camera ou caméra USB
+- **Support multi-caméras** : Pi Camera ou caméra USB avec détection automatique
 - **Interface tactile optimisée** pour écran 7 pouces
 - **Capture photo instantanée** directement depuis le flux vidéo
+- **Galerie de photos intégrée** avec gestion complète
 - **Diaporama automatique** configurable après période d'inactivité
-- **Impression thermique** avec texte personnalisable
-- **Interface d'administration** complète
+- **Impression thermique** avec configuration avancée et détection des ports
+- **Interface d'administration** complète avec contrôles système
+- **Mode kiosk automatique** pour démarrage au boot
+- **API de statut** pour surveillance de l'imprimante
 
 ## 🔧️ Matériel requis
 
 ### Matériel supporté
 
 - **Caméra** : 
-  - Raspberry Pi Camera (v1, v2, v3, HQ)
-  - Caméra USB standard (webcam)
+  - Raspberry Pi Camera (v1, v2, v3, HQ) - Détection automatique
+  - Caméra USB standard (webcam) - Détection automatique des ports
 - **Écran tactile** : Écran 7 pouces recommandé
-- **Imprimante thermique Serie** : Compatible avec le script `ScriptPythonPOS.py`
+- **Imprimante thermique Série** : Compatible avec détection automatique des ports série
 
 ### 🛒 Liens d'achat (Affiliation)
 
@@ -111,32 +114,37 @@ python3 app.py
    - Ouvrir un navigateur sur `http://localhost:5000`
    - Ou depuis un autre appareil : `http://[IP_RASPBERRY]:5000`
 
-3. **Administration :**
-   - Accéder à `/admin` pour configurer l'application
+3. **Pages disponibles :**
+   - `/` : Interface principale du photobooth
+   - `/photos` : Galerie de gestion des photos
+   - `/admin` : Panneau d'administration complet
 
 ## Configuration des caméras
 
-L'application supporte deux types de caméras, configurables depuis la page d'administration :
+L'application supporte deux types de caméras avec détection automatique :
 
 ### Pi Camera (par défaut)
 
-- Utilise le module `libcamera-vid` pour capturer le flux vidéo
-- Idéal pour les Raspberry Pi avec caméra officielle
-- Aucune configuration supplémentaire requise
+- Utilise `rpicam-vid` pour le flux vidéo temps réel (1280x720@15fps)
+- Utilise `rpicam-still` pour les captures haute qualité (2304x1296)
+- Détection automatique de la caméra Pi
+- Compatible avec toutes les caméras officielles Raspberry Pi
 
 ### Caméra USB
 
 - Utilise OpenCV (`cv2`) pour capturer le flux vidéo
+- Détection automatique des caméras USB disponibles
+- Interface de sélection dans l'administration
 - Compatible avec la plupart des webcams USB standard
-- Configuration dans l'admin :
-  1. Sélectionner "Caméra USB" dans les options de caméra
-  2. Spécifier l'ID de la caméra (généralement `0` pour la première caméra)
-  3. Si vous avez plusieurs caméras USB, essayez les IDs `1`, `2`, etc.
+- Configuration automatique :
+  1. Les caméras USB sont détectées automatiquement
+  2. Sélection dans le menu déroulant de l'administration
+  3. Test de connexion en temps réel
 
-> **Note** : Si vous rencontrez des problèmes avec la caméra USB, vérifiez que :
-> - La caméra est bien connectée et alimentée
-> - Les permissions sont correctes (`sudo usermod -a -G video $USER`)
-> - La caméra est compatible avec OpenCV
+> **Note** : 
+> - La détection automatique facilite la configuration
+> - Les permissions sont gérées automatiquement par le script `setup.sh`
+> - Support du hot-plug (connexion à chaud) des caméras USB
 
 ## 📂 Structure des fichiers
 
@@ -150,12 +158,14 @@ SimpleBooth/
 ├── ScriptPythonPOS.py     # Script autonome pour l'impression thermique
 ├── setup.sh               # Script d'installation automatisée pour Raspberry Pi
 ├── requirements.txt       # Dépendances Python
+├── TROUBLESHOOTING.md     # Guide de dépannage
 ├── static/                # Fichiers statiques
-│   └── camera-placeholder.svg
+│   └── manifest.json      # Manifest PWA
 ├── templates/             # Templates HTML (Jinja2)
 │   ├── index.html         # Interface principale du photobooth
 │   ├── review.html        # Page de prévisualisation et d'action post-capture
-│   ├── admin.html         # Panneau d'administration
+│   ├── photos.html        # Galerie de gestion des photos
+│   ├── admin.html         # Panneau d'administration avancé
 │   └── base.html          # Template de base commun
 ├── photos/                # Dossier pour les photos (créé au lancement)
 └── config.json            # Fichier de configuration (créé au lancement)
@@ -168,14 +178,45 @@ La configuration est sauvegardée dans `config.json` :
 ### Général
 - `footer_text` : Texte en pied de photo
 - `timer_seconds` : Délai avant capture (1-10 secondes)
-- `high_density` : Qualité d'impression haute densité
+
+### Caméra
+- `camera_type` : Type de caméra (`picamera` ou `usb`)
+- `usb_camera_id` : ID de la caméra USB (0, 1, 2...)
+
+### Impression
+- `printer_enabled` : Activer/désactiver l'impression
+- `printer_port` : Port série de l'imprimante (détection automatique disponible)
+- `printer_baudrate` : Vitesse de communication (9600, 19200, 38400...)
+- `print_resolution` : Résolution d'impression (384 standard, 576+ haute qualité)
 
 ### Diaporama
 - `slideshow_enabled` : Activer/désactiver le diaporama automatique
 - `slideshow_delay` : Délai d'inactivité avant affichage du diaporama (10-300 secondes)
 - `slideshow_source` : Source des photos pour le diaporama
 
+## 🆕 Nouvelles fonctionnalités
+
+### Galerie de photos intégrée
+- Page dédiée `/photos` pour la gestion des photos
+- Prévisualisation, téléchargement et suppression
+- Réimpression directe depuis la galerie
+- Métadonnées complètes (taille, date)
+
+### Administration avancée
+- Détection automatique des caméras USB disponibles
+- Détection automatique des ports série
+- Contrôle du mode kiosk (arrêt/redémarrage)
+- Arrêt complet de l'application
+- Surveillance en temps réel de l'imprimante
+
+### API et surveillance
+- `/api/slideshow` : Données du diaporama
+- `/api/printer_status` : État de l'imprimante
+- Logs détaillés et gestion d'erreurs améliorée
+
 ## Dépannage
 
 - **Caméra non détectée** : Vérifier que la caméra est activée dans `raspi-config`
-- **Erreur d'impression** : Vérifier la connexion de l'imprimante thermique et TX/RX
+- **Erreur d'impression** : Utiliser la détection automatique des ports ou vérifier `/dev/ttyAMA0`
+- **Mode kiosk bloqué** : Accéder à `/admin` puis utiliser les contrôles système
+- **Caméra USB non reconnue** : Vérifier dans `/admin` la liste des caméras détectées
