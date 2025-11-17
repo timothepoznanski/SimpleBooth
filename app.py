@@ -238,7 +238,8 @@ def print_photo():
             return jsonify({'success': False, 'error': 'Script d\'impression introuvable (ScriptPythonPOS.py)'})
         
         # Construire la commande d'impression avec les nouveaux paramètres
-        cmd = ['python3', 'ScriptPythonPOS.py', '--image', photo_path]
+        venv_python = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'venv', 'bin', 'python')
+        cmd = [venv_python, 'ScriptPythonPOS.py', '--image', photo_path]
         
         # Ajouter les paramètres de port et baudrate
         printer_port = config.get('printer_port', '/dev/ttyS0')
@@ -496,8 +497,9 @@ def reprint_photo(filename):
             
             # Utiliser le script d'impression existant
             import subprocess
+            venv_python = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'venv', 'bin', 'python')
             cmd = [
-                'python3', 'ScriptPythonPOS.py',
+                venv_python, 'ScriptPythonPOS.py',
                 '--image', photo_path
             ]
             
