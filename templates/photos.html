@@ -102,14 +102,6 @@
                                    title="Télécharger">
                                     <i class="fas fa-download"></i>
                                 </a>
-                                {% if config.get('printer_enabled', True) %}
-                                <button onclick="reprintPhoto('{{ photo.filename }}')" 
-                                        class="btn btn-secondary" 
-                                        title="Imprimer"
-                                        disabled>
-                                    <i class="fas fa-print"></i>
-                                </button>
-                                {% endif %}
                                 <button onclick="deletePhoto('{{ photo.filename }}')" 
                                         class="btn btn-outline-danger" 
                                         title="Supprimer">
@@ -135,26 +127,24 @@
 <script>
 // Fonction pour supprimer une photo individuelle
 function deletePhoto(filename) {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cette photo ?')) {
-        fetch(`/admin/delete_photo/${filename}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Erreur lors de la suppression : ' + (data.error || 'Erreur inconnue'));
-            }
-        })
-        .catch(error => {
-            console.error('Erreur:', error);
-            alert('Erreur lors de la suppression');
-        });
-    }
+    fetch(`/admin/delete_photo/${filename}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Erreur lors de la suppression : ' + (data.error || 'Erreur inconnue'));
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Erreur lors de la suppression');
+    });
 }
 
 // Fonction pour réimprimer une photo

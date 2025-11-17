@@ -527,22 +527,20 @@ function cancelDeleteAllPhotos() {
 }
 
 function deletePhoto(filename) {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer "${filename}" ?`)) {
-        fetch(`/admin/delete_photo/${filename}`, {
-            method: 'POST'
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Erreur lors de la suppression: ' + data.error);
-            }
-        })
-        .catch(error => {
-            alert('Erreur réseau: ' + error);
-        });
-    }
+    fetch(`/admin/delete_photo/${filename}`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Erreur lors de la suppression: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Erreur réseau: ' + error);
+    });
 }
 
 // Initialisation au chargement de la page
