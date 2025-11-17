@@ -16,7 +16,7 @@ Cette application transforme votre Raspberry Pi en un photobooth professionnel a
 - **Interface tactile optimisée** pour écran 7 pouces
 - **Capture photo instantanée** directement depuis le flux vidéo
 - **Galerie de photos intégrée** avec gestion complète
-- **Diaporama automatique** configurable après période d'inactivité
+ - (Diaporama feature removed from this build)
 - **Impression thermique** avec configuration avancée et détection des ports
 - **Interface d'administration** complète avec contrôles système
 - **Mode kiosk automatique** pour démarrage au boot
@@ -163,10 +163,7 @@ La configuration est sauvegardée dans `config.json` :
 - `printer_baudrate` : Vitesse de communication (9600, 19200, 38400...)
 - `print_resolution` : Résolution d'impression (384 standard, 576+ haute qualité)
 
-### Diaporama
-- `slideshow_enabled` : Activer/désactiver le diaporama automatique
-- `slideshow_delay` : Délai d'inactivité avant affichage du diaporama (10-300 secondes)
-- `slideshow_source` : Source des photos pour le diaporama
+<!-- Diaporama section removed -->
 
 ## 🆕 Nouvelles fonctionnalités
 
@@ -184,7 +181,7 @@ La configuration est sauvegardée dans `config.json` :
 - Surveillance en temps réel de l'imprimante
 
 ### API et surveillance
-- `/api/slideshow` : Données du diaporama
+<!-- /api/slideshow removed -->
 - `/api/printer_status` : État de l'imprimante
 - Logs détaillés et gestion d'erreurs améliorée
 

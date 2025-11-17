@@ -182,64 +182,7 @@
         
 
         
-        <!-- Configuration Diaporama -->
-        <div class="card mb-4">
-            <div class="card-header bg-info text-white">
-                <h3 class="mb-0"><i class="fas fa-play-circle me-2"></i>Configuration Diaporama</h3>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">
-                                <i class="fas fa-toggle-on me-2 text-info"></i>Activation
-                            </label>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" 
-                                       type="checkbox" 
-                                       id="slideshow_enabled" 
-                                       name="slideshow_enabled"
-                                       {{ 'checked' if config.slideshow_enabled else '' }}>
-                                <label class="form-check-label" for="slideshow_enabled">
-                                    Activer le diaporama automatique
-                                </label>
-                            </div>
-                            <div class="form-text">Le diaporama se lance automatiquement après inactivité</div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="slideshow_delay" class="form-label fw-bold">
-                                <i class="fas fa-hourglass-half me-2 text-info"></i>Délai d'activation
-                            </label>
-                            <input type="number" 
-                                   class="form-control" 
-                                   id="slideshow_delay" 
-                                   name="slideshow_delay" 
-                                   value="{{ config.slideshow_delay }}"
-                                   min="10" 
-                                   max="300">
-                            <div class="form-text">Temps d'inactivité avant le diaporama (10-300 secondes)</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="slideshow_source" class="form-label fw-bold">
-                                <i class="fas fa-folder-open me-2 text-info"></i>Source des photos
-                            </label>
-                            <select class="form-select" id="slideshow_source" name="slideshow_source">
-                                <option value="photos" {{ 'selected' if config.slideshow_source == 'photos' else '' }}>Photos originales</option>
-                            </select>
-                            <div class="form-text">Choisir le dossier source pour le diaporama</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Diaporama supprimé - section retirée -->
         
         <!-- Configuration Imprimante -->
         <div class="card mb-4">

@@ -393,12 +393,6 @@ def save_admin_config():
         config['timer_seconds'] = int(timer_seconds) if timer_seconds else 3
         
         config['high_density'] = 'high_density' in request.form
-        config['slideshow_enabled'] = 'slideshow_enabled' in request.form
-        
-        slideshow_delay = request.form.get('slideshow_delay', '60').strip()
-        config['slideshow_delay'] = int(slideshow_delay) if slideshow_delay else 60
-        
-        config['slideshow_source'] = request.form.get('slideshow_source', 'photos')
         
         # Configuration de la caméra
         config['camera_type'] = request.form.get('camera_type', 'picamera')
@@ -542,27 +536,7 @@ def reprint_photo(filename):
     
     return redirect(url_for('admin'))
 
-@app.route('/api/slideshow')
-def get_slideshow_data():
-    """API pour récupérer les données du diaporama"""
-    photos = []
-    
-    # Utiliser uniquement le dossier photos
-    source_folder = PHOTOS_FOLDER
-    
-    if os.path.exists(source_folder):
-        for filename in os.listdir(source_folder):
-            if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-                photos.append(filename)
-    
-    photos.sort(reverse=True)  # Plus récentes en premier
-    
-    return jsonify({
-        'enabled': config.get('slideshow_enabled', False),
-        'delay': config.get('slideshow_delay', 60),
-        'source': config.get('slideshow_source', 'photos'),
-        'photos': photos
-    })
+# Diaporama feature removed: /api/slideshow endpoint deleted
 
 @app.route('/api/printer_status')
 def get_printer_status():
