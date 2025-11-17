@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
-# Nettoyage simple
+# Nettoyage complet de Chromium
 pkill -9 chromium 2>/dev/null || true
+pkill -9 chrome 2>/dev/null || true
 rm -rf /tmp/chromium-user-data 2>/dev/null || true
-sleep 2
+rm -rf ~/.config/chromium/Singleton* 2>/dev/null || true
+sleep 3
 
 # Désactiver l'écran de veille
 xset s off 2>/dev/null || true
