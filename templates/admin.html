@@ -690,14 +690,12 @@ function openPhotoModal(element) {
     };
     
     document.getElementById('reprintBtn').onclick = function() {
-        if (confirm('Voulez-vous vraiment réimprimer cette photo ?')) {
-            // Créer un formulaire pour la requête POST
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = `{{ url_for('reprint_photo', filename='') }}${filename}`;
-            document.body.appendChild(form);
-            form.submit();
-        }
+        // Créer un formulaire pour la requête POST
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `{{ url_for('reprint_photo', filename='') }}${filename}`;
+        document.body.appendChild(form);
+        form.submit();
     };
     
     // Ouvrir la modale
