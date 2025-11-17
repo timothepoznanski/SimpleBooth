@@ -316,16 +316,27 @@ setup_systemd() {
   step "Configuration des services système"
   # S'assurer que le script de démarrage existe
   [[ -f "$HOME_DIR/start_simplebooth.sh" ]] || error "Script de démarrage manquant"
-  progress "Installation du service systemd..."
+  progress "Création du service systemd..."
   
-  # Copier le fichier service depuis le dépôt
-  cp "$APP_DIR/systemd/simplebooth-kiosk.service" /etc/systemd/system/ || error "Échec copie service systemd"
-  
-  # Adapter le service pour l'utilisateur actuel
-  sed -i "s/User=.*/User=$INSTALL_USER/" /etc/systemd/system/simplebooth-kiosk.service
-  sed -i "s/Group=.*/Group=$INSTALL_USER/" /etc/systemd/system/simplebooth-kiosk.service
-  sed -i "s|Environment=HOME=.*|Environment=HOME=$HOME_DIR|" /etc/systemd/system/simplebooth-kiosk.service
-  sed -i "s|ExecStart=.*|ExecStart=$HOME_DIR/start_simplebooth.sh|" /etc/systemd/system/simplebooth-kiosk.service
+  cat > /etc/systemd/system/simplebooth-kiosk.service <<EOF
+[Unit]
+Description=SimpleBooth Kiosk
+After=graphical.target
+Wants=graphical.target
+
+[Service]
+Type=simple
+User=$INSTALL_USER
+Group=$INSTALL_USER
+Environment=DISPLAY=:0
+Environment=HOME=$HOME_DIR
+ExecStart=$HOME_DIR/start_simplebooth.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical.target
+EOF
   
   progress "Rechargement des services systemd..."
   systemctl daemon-reload || error "Échec rechargement systemd"
@@ -351,8 +362,13 @@ main() {
   echo "Version: Raspberry Pi OS"
   echo
   
-  update_system
-  install_dependencies
+  if confirm "Update system et install dependencies? (o/N)"; then
+    update_system
+    install_dependencies
+  else
+    log "Update et install ignored"
+  fi
+
   if confirm "Configurer écran Waveshare 7\" DSI? (o/N)"; then 
     configure_waveshare
   else 

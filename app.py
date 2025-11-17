@@ -55,17 +55,19 @@ def check_printer_status():
             printer = Serial(printer_port, baudrate=printer_baudrate, timeout=1)
             
             # Vérifier l'état du papier (commande ESC/POS standard)
-            printer._raw(b'\x10\x04\x01')  # Commande de statut en temps réel
-            
-            # Lire la réponse (si disponible)
-            # Note: Cette partie peut varier selon le modèle d'imprimante
+            # Utiliser la méthode paper_status() au lieu de raw command pour éviter les problèmes
+            try:
+                paper_status = printer.paper_status()
+                paper_status_msg = 'ok' if paper_status == 2 else 'error'
+            except:
+                paper_status_msg = 'unknown'
             
             printer.close()
             
             return {
                 'status': 'ok',
                 'message': 'Imprimante connectée',
-                'paper_status': 'ok',
+                'paper_status': paper_status_msg,
                 'port': printer_port,
                 'baudrate': printer_baudrate
             }

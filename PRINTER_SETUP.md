@@ -51,12 +51,26 @@ ls -l /dev/ttyS0
 
 ## 3. Désactiver le service getty sur le port série
 
-Le service getty bloque le port série. Le désactiver :
+**⚠️ ÉTAPE CRITIQUE - NE PAS OUBLIER ! ⚠️**
+
+Le service `getty` (console série) utilise par défaut le port `/dev/ttyS0`. Si ce service n'est pas désactivé, il va interférer avec l'imprimante et causer des impressions intempestives de "My IP address" ou autres messages parasites.
+
+Désactiver et arrêter le service :
 
 ```bash
 sudo systemctl stop serial-getty@ttyS0.service
 sudo systemctl disable serial-getty@ttyS0.service
 ```
+
+Vérifier que le port est libre :
+
+```bash
+sudo lsof /dev/ttyS0
+```
+
+**Résultat attendu :** Aucune sortie (port libre)
+
+**Si vous oubliez cette étape :** L'imprimante imprimera des messages parasites à chaque vérification de statut ou communication.
 
 ## 4. Configurer les permissions
 
