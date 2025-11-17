@@ -12,7 +12,6 @@ import signal
 import atexit
 import sys
 from datetime import datetime
-from threading import Lock
 from config_utils import (
     PHOTOS_FOLDER,
     load_config,
@@ -30,19 +29,8 @@ logger = logging.getLogger(__name__)
 # Initialiser les dossiers nécessaires
 ensure_directories()
 
-# Verrou global pour l'accès à l'imprimante
-printer_lock = Lock()
-
 def check_printer_status():
     """Vérifier l'état de l'imprimante thermique"""
-    # Essayer d'acquérir le verrou sans bloquer
-    if not printer_lock.acquire(blocking=False):
-        return {
-            'status': 'busy',
-            'message': 'Imprimante occupée (impression en cours)',
-            'paper_status': 'unknown'
-        }
-    
     try:
         # Vérifier si le module escpos est disponible
         try:
@@ -101,8 +89,6 @@ def check_printer_status():
             'message': f'Erreur lors de la vérification: {str(e)}',
             'paper_status': 'unknown'
         }
-    finally:
-        printer_lock.release()
 
 
 # Fonction pour détecter les ports série disponibles
@@ -236,9 +222,7 @@ def print_photo():
     if not current_photo:
         return jsonify({'success': False, 'error': 'Aucune photo à imprimer'})
     
-    # Acquérir le verrou d'impression
-    with printer_lock:
-        try:
+    try:
         # Vérifier si l'imprimante est activée
         if not config.get('printer_enabled', True):
             return jsonify({'success': False, 'error': 'Imprimante désactivée dans la configuration'})
@@ -286,9 +270,9 @@ def print_photo():
                 return jsonify({'success': False, 'error': 'Module escpos manquant. Installez-le avec: pip install python-escpos'})
             else:
                 return jsonify({'success': False, 'error': f'Erreur d\'impression: {error_msg}'})
-                
-        except Exception as e:
-            return jsonify({'success': False, 'error': str(e)})
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/delete_current', methods=['POST'])
 def delete_current_photo():
@@ -500,9 +484,7 @@ def download_photo(filename):
 @app.route('/admin/reprint_photo/<filename>', methods=['POST'])
 def reprint_photo(filename):
     """Réimprimer une photo spécifique"""
-    # Acquérir le verrou d'impression
-    with printer_lock:
-        try:
+    try:
         # Chercher la photo dans le dossier photos
         photo_path = os.path.join(PHOTOS_FOLDER, filename)
         
@@ -538,28 +520,20 @@ def reprint_photo(filename):
             
             result = subprocess.run(cmd, capture_output=True, text=True, cwd=os.path.dirname(os.path.abspath(__file__)))
             
-            # Logger les détails pour déboguer
-            logger.info(f"[PRINT] Command: {' '.join(cmd)}")
-            logger.info(f"[PRINT] Return code: {result.returncode}")
-            logger.info(f"[PRINT] Stdout: {result.stdout}")
-            logger.info(f"[PRINT] Stderr: {result.stderr}")
-            
             if result.returncode == 0:
-                # L'impression a réussi même s'il y a des warnings dans stdout
                 flash('Photo réimprimée avec succès!', 'success')
-                logger.info("[PRINT] Impression réussie!")
             else:
                 error_msg = result.stderr.strip() if result.stderr else 'Erreur inconnue'
                 if 'ModuleNotFoundError' in error_msg and 'escpos' in error_msg:
                     flash('Module escpos manquant. Installez-le avec: pip install python-escpos', 'error')
                 else:
                     flash(f'Erreur d\'impression: {error_msg}', 'error')
-            else:
-                flash('Photo introuvable', 'error')
-        except Exception as e:
-            flash(f'Erreur lors de la réimpression: {str(e)}', 'error')
-        
-        return redirect(url_for('admin'))
+        else:
+            flash('Photo introuvable', 'error')
+    except Exception as e:
+        flash(f'Erreur lors de la réimpression: {str(e)}', 'error')
+    
+    return redirect(url_for('admin'))
 
 @app.route('/api/slideshow')
 def get_slideshow_data():
