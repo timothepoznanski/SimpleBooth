@@ -632,6 +632,16 @@ def stop_camera():
     stop_camera_process()
     return jsonify({'status': 'camera_stopped'})
 
+@app.route('/restart_kiosk', methods=['POST'])
+def restart_kiosk():
+    """Redémarrer le service kiosk"""
+    try:
+        # Exécuter la commande de redémarrage en arrière-plan
+        subprocess.Popen(['sudo', 'systemctl', 'restart', 'simplebooth-kiosk.service'])
+        return jsonify({'success': True, 'message': 'Redémarrage en cours...'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
 # Nettoyer les processus à la fermeture
 @atexit.register
 def cleanup():

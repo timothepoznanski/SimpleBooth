@@ -4,6 +4,16 @@
 
 {% block content %}
 <div class="container-fluid p-3" style="height: 100vh; overflow: hidden; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #1a1a1a;">
+    <!-- Bouton restart discret en haut à gauche -->
+    <button onclick="restartKiosk()" 
+            class="btn btn-sm btn-outline-secondary position-fixed" 
+            style="top: 10px; left: 10px; z-index: 30; opacity: 0.3; border-radius: 5px; padding: 5px 10px;"
+            title="Redémarrer le kiosque"
+            onmouseover="this.style.opacity='1'" 
+            onmouseout="this.style.opacity='0.3'">
+        <i class="fas fa-sync-alt"></i>
+    </button>
+    
     <style>
     /* Ajustements spécifiques pour les petits écrans 800x480 */
     @media (max-width: 800px) and (max-height: 480px) {
@@ -179,6 +189,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // Vérifier toutes les 5 minutes au lieu de 30 secondes pour éviter de spammer l'imprimante
     setInterval(checkPrinterPaperStatus, 300000); // 5 minutes
 });
+
+// Fonction pour redémarrer le service kiosk
+function restartKiosk() {
+    fetch('/restart_kiosk', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Le kiosque va redémarrer, pas besoin d'alerte
+        } else {
+            alert('Erreur: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+    });
+}
 
 // Nettoyer les ressources lors de la fermeture
 window.addEventListener('beforeunload', function() {
