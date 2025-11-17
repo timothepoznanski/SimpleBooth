@@ -559,69 +559,68 @@ def generate_video_stream():
         
         # Utiliser la Pi Camera par défaut
         # (USB camera support removed, any non-picamera config falls back to picamera)
-            logger.info("[CAMERA] Démarrage de la Pi Camera...")
-            # Commande rpicam-vid pour flux MJPEG - résolution 16/9
-            cmd = [
-                'rpicam-vid',
-                '--codec', 'mjpeg',
-                '--width', '1280',   # Résolution native plus compatible
-                '--height', '720',   # Vrai 16/9 sans bandes noires
-                '--framerate', '15', # Framerate plus élevé pour cette résolution
-                '--timeout', '0',    # Durée infinie
-                '--output', '-',     # Sortie vers stdout
-                '--inline',          # Headers inline
-                '--flush',           # Flush immédiat
-                '--nopreview'        # Pas d'aperçu local
-            ]
-            
-            camera_process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                bufsize=0
-            )
-            
-            # Buffer pour assembler les frames JPEG
-            buffer = b''
-            
-            while camera_process and camera_process.poll() is None:
-                try:
-                    # Lire les données par petits blocs
-                    chunk = camera_process.stdout.read(1024)
-                    if not chunk:
-                        break
-                        
-                    buffer += chunk
-                    
-                    # Chercher les marqueurs JPEG
-                    while True:
-                        # Chercher le début d'une frame JPEG (0xFFD8)
-                        start = buffer.find(b'\xff\xd8')
-                        if start == -1:
-                            break
-                            
-                        # Chercher la fin de la frame JPEG (0xFFD9)
-                        end = buffer.find(b'\xff\xd9', start + 2)
-                        if end == -1:
-                            break
-                            
-                        # Extraire la frame complète
-                        jpeg_frame = buffer[start:end + 2]
-                        buffer = buffer[end + 2:]
-                        
-                        # Stocker la frame pour capture instantanée
-                        with frame_lock:
-                            last_frame = jpeg_frame
-                        
-                        # Envoyer la frame au navigateur
-                        yield (b'--frame\r\n'
-                               b'Content-Type: image/jpeg\r\n'
-                               b'Content-Length: ' + str(len(jpeg_frame)).encode() + b'\r\n\r\n' +
-                               jpeg_frame + b'\r\n')
-                               
-                except Exception as e:
-                    logger.info(f"[CAMERA] Erreur lecture flux: {e}")
+        logger.info("[CAMERA] Démarrage de la Pi Camera...")
+        # Commande rpicam-vid pour flux MJPEG - résolution 16/9
+        cmd = [
+            'rpicam-vid',
+            '--codec', 'mjpeg',
+            '--width', '1280',   # Résolution native plus compatible
+            '--height', '720',   # Vrai 16/9 sans bandes noires
+            '--framerate', '15', # Framerate plus élevé pour cette résolution
+            '--timeout', '0',    # Durée infinie
+            '--output', '-',     # Sortie vers stdout
+            '--inline',          # Headers inline
+            '--flush',           # Flush immédiat
+            '--nopreview'        # Pas d'aperçu local
+        ]
+
+        camera_process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            bufsize=0
+        )
+
+        # Buffer pour assembler les frames JPEG
+        buffer = b''
+
+        while camera_process and camera_process.poll() is None:
+            try:
+                # Lire les données par petits blocs
+                chunk = camera_process.stdout.read(1024)
+                if not chunk:
                     break
+
+                buffer += chunk
+
+                # Chercher les marqueurs JPEG
+                while True:
+                    # Chercher le début d'une frame JPEG (0xFFD8)
+                    start = buffer.find(b'\xff\xd8')
+                    if start == -1:
+                        break
+
+                    # Chercher la fin de la frame JPEG (0xFFD9)
+                    end = buffer.find(b'\xff\xd9', start + 2)
+                    if end == -1:
+                        break
+
+                    # Extraire la frame complète
+                    jpeg_frame = buffer[start:end + 2]
+                    buffer = buffer[end + 2:]
+
+                    # Stocker la frame pour capture instantanée
+                    with frame_lock:
+                        last_frame = jpeg_frame
+
+                    # Envoyer la frame au navigateur
+                    yield (b'--frame\r\n'
+                           b'Content-Type: image/jpeg\r\n'
+                           b'Content-Length: ' + str(len(jpeg_frame)).encode() + b'\r\n\r\n' +
+                           jpeg_frame + b'\r\n')
+            except Exception as e:
+                logger.info(f"[CAMERA] Erreur lecture flux: {e}")
+                break
                 
     except Exception as e:
         logger.info(f"Erreur flux vidéo: {e}")
