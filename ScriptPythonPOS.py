@@ -70,12 +70,29 @@ def check_paper_status(printer):
         return None, f"Erreur vérification papier: {e}"
 
 def optimize_image(img_path, high_density=False):
-    """Optimiser l'image pour imprimante thermique 57mm"""
-    # Charger la photo haute résolution
-    img = Image.open(img_path)
-    img = img.convert('L')  # Niveau de gris
-    # Redimensionner: largeur fixe 384px, hauteur proportionnelle
-    img = img.resize((384, int(384 * img.height / img.width)))
+    """Optimiser l'image avec compensation pour la haute densité"""
+    # Charger et convertir en gris
+    img = Image.open(img_path).convert('L')
+    original_width, original_height = img.size
+    
+    # Largeur maximale selon la densité
+    if high_density:
+        max_width = 384  # Haute densité = largeur complète
+        height_compensation = 1.0  # Compensation ajustée pour l'écrasement en HD
+    else:
+        max_width = 192  # Basse densité = largeur réduite
+        height_compensation = 1.0  # Pas de compensation en basse densité
+    
+    # Redimensionner SEULEMENT si l'image est plus large que la limite
+    if original_width > max_width:
+        # Calculer le ratio pour préserver les proportions
+        ratio = max_width / original_width
+        new_height = int(original_height * ratio * height_compensation)
+        img = img.resize((max_width, new_height), Image.Resampling.LANCZOS)
+    elif high_density:
+        # Même si l'image est plus petite, appliquer la compensation en HD
+        new_height = int(original_height * height_compensation)
+        img = img.resize((original_width, new_height), Image.Resampling.LANCZOS)
       
     return img
 
