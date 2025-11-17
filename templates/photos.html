@@ -104,8 +104,9 @@
                                 </a>
                                 {% if config.get('printer_enabled', True) %}
                                 <button onclick="reprintPhoto('{{ photo.filename }}')" 
-                                        class="btn btn-outline-success" 
-                                        title="Imprimer">
+                                        class="btn btn-secondary" 
+                                        title="Imprimer"
+                                        disabled>
                                     <i class="fas fa-print"></i>
                                 </button>
                                 {% endif %}
