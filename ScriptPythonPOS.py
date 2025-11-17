@@ -70,40 +70,22 @@ def check_paper_status(printer):
         return None, f"Erreur vérification papier: {e}"
 
 def optimize_image(img_path, high_density=False):
-    """Optimiser l'image avec compensation pour la haute densité"""
-    # Charger et convertir en gris
-    img = Image.open(img_path).convert('L')
-    original_width, original_height = img.size
-    
-    # Largeur maximale selon la densité
-    if high_density:
-        max_width = 384  # Haute densité = largeur complète
-        height_compensation = 1.0  # Compensation ajustée pour l'écrasement en HD
-    else:
-        max_width = 192  # Basse densité = largeur réduite
-        height_compensation = 1.0  # Pas de compensation en basse densité
-    
-    # Redimensionner SEULEMENT si l'image est plus large que la limite
-    if original_width > max_width:
-        # Calculer le ratio pour préserver les proportions
-        ratio = max_width / original_width
-        new_height = int(original_height * ratio * height_compensation)
-        img = img.resize((max_width, new_height), Image.Resampling.LANCZOS)
-    elif high_density:
-        # Même si l'image est plus petite, appliquer la compensation en HD
-        new_height = int(original_height * height_compensation)
-        img = img.resize((original_width, new_height), Image.Resampling.LANCZOS)
+    """Optimiser l'image pour imprimante thermique 57mm"""
+    # Charger la photo haute résolution
+    img = Image.open(img_path)
+    img = img.convert('L')  # Niveau de gris
+    # Redimensionner: largeur fixe 384px, hauteur proportionnelle
+    img = img.resize((384, int(384 * img.height / img.width)))
       
     return img
 
 def print_image(printer, img, filename, high_density=False):
-    """Imprimer avec densité configurable"""
+    """Imprimer avec bitImageRaster en basse densité"""
     printer.image(
         img,
         impl='bitImageRaster',
-        high_density_vertical=high_density,
-        high_density_horizontal=high_density,
-        fragment_height=1920
+        high_density_vertical=False,
+        high_density_horizontal=False
     )
 
 def print_text_bottom(printer, text):
@@ -128,23 +110,14 @@ def print_text_bottom(printer, text):
 def print_with_paper_check(printer, optimized_img, filename, high_density, bottom_text):
     """Imprimer avec vérification préalable du papier"""
     
-    # Vérifier le papier avant d'imprimer
-    paper_ok, paper_msg = check_paper_status(printer)
-    
-    if paper_ok is False:
-        print(f"⚠️  ATTENTION: {paper_msg}")
-        print("Veuillez recharger le papier avant d'imprimer.")
-        return False
-    elif paper_ok is None:
-        print(f"⚠️  {paper_msg}")
-        print("Impression sans vérification du papier...")
-    else:
-        print(f"✅ {paper_msg}")
-    
-    # Procéder à l'impression
+    # Procéder directement à l'impression sans vérification du papier
     print_image(printer, optimized_img, filename, high_density)
-    print_text_bottom(printer, bottom_text)
-    printer.text("\n\n\n\n")  # 4 retours pour plus d'espace
+    
+    # Ajouter du texte uniquement si fourni
+    if bottom_text:
+        print_text_bottom(printer, bottom_text)
+    
+    printer.text("\n\n\n")  # Retours à la ligne
     
     return True
 

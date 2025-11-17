@@ -243,11 +243,6 @@ def print_photo():
         if footer_text:
             cmd.extend(['--text', footer_text])
         
-        # Ajouter l'option haute résolution selon la configuration
-        print_resolution = config.get('print_resolution', 384)
-        if print_resolution > 384:
-            cmd.append('--hd')
-        
         # Exécuter l'impression
         result = subprocess.run(cmd, capture_output=True, text=True, cwd=os.path.dirname(os.path.abspath(__file__)))
         
@@ -483,11 +478,6 @@ def reprint_photo(filename):
             if footer_text:
                 cmd.extend(['--text', footer_text])
             
-            # Ajouter l'option HD si la résolution est élevée
-            print_resolution = config.get('print_resolution', 384)
-            if print_resolution > 384:
-                cmd.append('--hd')
-            
             result = subprocess.run(cmd, capture_output=True, text=True, cwd=os.path.dirname(os.path.abspath(__file__)))
             
             # Logger les détails
@@ -529,89 +519,99 @@ def serve_photo(filename):
 @app.route('/video_stream')
 def video_stream():
     """Flux vidéo MJPEG en temps réel"""
-    return Response(generate_video_stream(),
-                   mimetype='multipart/x-mixed-replace; boundary=frame')
+    response = Response(generate_video_stream(),
+                       mimetype='multipart/x-mixed-replace; boundary=frame')
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 def generate_video_stream():
     """Générer le flux vidéo MJPEG avec la Pi Camera"""
     global camera_process, last_frame
     
-    try:
-        # Arrêter tout processus caméra existant
-        stop_camera_process()
-        
-        logger.info("[CAMERA] Démarrage de la Pi Camera...")
-        # Commande rpicam-vid pour flux MJPEG - résolution 16/9
-        cmd = [
-            'rpicam-vid',
-            '--codec', 'mjpeg',
-            '--width', '1280',   # Résolution native plus compatible
-            '--height', '720',   # Vrai 16/9 sans bandes noires
-            '--framerate', '15', # Framerate plus élevé pour cette résolution
-            '--timeout', '0',    # Durée infinie
-            '--output', '-',     # Sortie vers stdout
-            '--inline',          # Headers inline
-            '--flush',           # Flush immédiat
-            '--nopreview'        # Pas d'aperçu local
-        ]
+    while True:  # Boucle infinie pour redémarrer la caméra si elle s'arrête
+        try:
+            # Arrêter tout processus caméra existant
+            stop_camera_process()
+            
+            logger.info("[CAMERA] Démarrage de la Pi Camera...")
+            # Commande rpicam-vid pour flux MJPEG - résolution 16/9
+            cmd = [
+                'rpicam-vid',
+                '--codec', 'mjpeg',
+                '--width', '1280',   # Résolution native plus compatible
+                '--height', '720',   # Vrai 16/9 sans bandes noires
+                '--framerate', '15', # Framerate plus élevé pour cette résolution
+                '--timeout', '0',    # Durée infinie
+                '--output', '-',     # Sortie vers stdout
+                '--inline',          # Headers inline
+                '--flush',           # Flush immédiat
+                '--nopreview'        # Pas d'aperçu local
+            ]
 
-        camera_process = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            bufsize=0
-        )
+            camera_process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                bufsize=0
+            )
 
-        # Buffer pour assembler les frames JPEG
-        buffer = b''
+            # Buffer pour assembler les frames JPEG
+            buffer = b''
 
-        while camera_process and camera_process.poll() is None:
-            try:
-                # Lire les données par petits blocs
-                chunk = camera_process.stdout.read(1024)
-                if not chunk:
+            while camera_process and camera_process.poll() is None:
+                try:
+                    # Lire les données par petits blocs
+                    chunk = camera_process.stdout.read(1024)
+                    if not chunk:
+                        break
+
+                    buffer += chunk
+
+                    # Chercher les marqueurs JPEG
+                    while True:
+                        # Chercher le début d'une frame JPEG (0xFFD8)
+                        start = buffer.find(b'\xff\xd8')
+                        if start == -1:
+                            break
+
+                        # Chercher la fin de la frame JPEG (0xFFD9)
+                        end = buffer.find(b'\xff\xd9', start + 2)
+                        if end == -1:
+                            break
+
+                        # Extraire la frame complète
+                        jpeg_frame = buffer[start:end + 2]
+                        buffer = buffer[end + 2:]
+
+                        # Stocker la frame pour capture instantanée
+                        with frame_lock:
+                            last_frame = jpeg_frame
+
+                        # Envoyer la frame au navigateur
+                        yield (b'--frame\r\n'
+                               b'Content-Type: image/jpeg\r\n'
+                               b'Content-Length: ' + str(len(jpeg_frame)).encode() + b'\r\n\r\n' +
+                               jpeg_frame + b'\r\n')
+                except Exception as e:
+                    logger.info(f"[CAMERA] Erreur lecture flux: {e}")
                     break
-
-                buffer += chunk
-
-                # Chercher les marqueurs JPEG
-                while True:
-                    # Chercher le début d'une frame JPEG (0xFFD8)
-                    start = buffer.find(b'\xff\xd8')
-                    if start == -1:
-                        break
-
-                    # Chercher la fin de la frame JPEG (0xFFD9)
-                    end = buffer.find(b'\xff\xd9', start + 2)
-                    if end == -1:
-                        break
-
-                    # Extraire la frame complète
-                    jpeg_frame = buffer[start:end + 2]
-                    buffer = buffer[end + 2:]
-
-                    # Stocker la frame pour capture instantanée
-                    with frame_lock:
-                        last_frame = jpeg_frame
-
-                    # Envoyer la frame au navigateur
-                    yield (b'--frame\r\n'
-                           b'Content-Type: image/jpeg\r\n'
-                           b'Content-Length: ' + str(len(jpeg_frame)).encode() + b'\r\n\r\n' +
-                           jpeg_frame + b'\r\n')
-            except Exception as e:
-                logger.info(f"[CAMERA] Erreur lecture flux: {e}")
-                break
-                
-    except Exception as e:
-        logger.info(f"Erreur flux vidéo: {e}")
-        # Envoyer une frame d'erreur
-        error_msg = f"Erreur caméra: {str(e)}"
-        yield (b'--frame\r\n'
-               b'Content-Type: text/plain\r\n\r\n' +
-               error_msg.encode() + b'\r\n')
-    finally:
-        stop_camera_process()
+                    
+        except Exception as e:
+            logger.info(f"Erreur flux vidéo: {e}")
+            # Envoyer une frame d'erreur
+            error_msg = f"Erreur caméra: {str(e)}"
+            yield (b'--frame\r\n'
+                   b'Content-Type: text/plain\r\n\r\n' +
+                   error_msg.encode() + b'\r\n')
+        
+        # Attendre un peu avant de redémarrer
+        import time
+        time.sleep(1)
+    
+    # Nettoyer à la fin
+    stop_camera_process()
 
 def stop_camera_process():
     """Arrêter proprement le processus caméra"""

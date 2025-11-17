@@ -71,7 +71,74 @@ document.addEventListener('DOMContentLoaded', function() {
     initCamera();
 });
 
+// Fonction pour initialiser la caméra
+function initCamera() {
+    // Démarrer le flux caméra si nécessaire
+    fetch('/start_camera').catch(error => {
+        console.log('Erreur démarrage caméra:', error);
+    });
+}
 
+// Fonction de capture de photo
+function capturePhoto() {
+    if (isCapturing) return;
+    isCapturing = true;
+    
+    const countdownElement = document.getElementById('countdown');
+    const flashOverlay = document.getElementById('flashOverlay');
+    const captureBtn = document.getElementById('captureBtn');
+    
+    // Désactiver le bouton
+    captureBtn.disabled = true;
+    captureBtn.innerHTML = '<i class="fas fa-spinner fa-spin fa-2x"></i>';
+    
+    // Countdown
+    let count = {{ timer }};
+    countdownElement.classList.remove('d-none');
+    countdownElement.innerHTML = `<div style="font-size: 10rem; font-weight: bold; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">${count}</div>`;
+    
+    const countdownInterval = setInterval(() => {
+        count--;
+        if (count > 0) {
+            countdownElement.innerHTML = `<div style="font-size: 10rem; font-weight: bold; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">${count}</div>`;
+        } else {
+            clearInterval(countdownInterval);
+            countdownElement.classList.add('d-none');
+            
+            // Flash
+            flashOverlay.classList.remove('d-none');
+            setTimeout(() => {
+                flashOverlay.classList.add('d-none');
+                
+                // Capture
+                fetch('/capture', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Rediriger vers la page de révision
+                            window.location.href = `/review?photo=${data.filename}`;
+                        } else {
+                            alert('Erreur de capture: ' + (data.error || 'Erreur inconnue'));
+                            resetCaptureButton();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur capture:', error);
+                        alert('Erreur de capture');
+                        resetCaptureButton();
+                    });
+            }, 200);
+        }
+    }, 1000);
+}
+
+// Fonction pour réinitialiser le bouton de capture
+function resetCaptureButton() {
+    const captureBtn = document.getElementById('captureBtn');
+    captureBtn.disabled = false;
+    captureBtn.innerHTML = '<i class="fas fa-camera fa-2x"></i>';
+    isCapturing = false;
+}
 
 // Vérifier le statut de l'imprimante pour l'alerte papier
 function checkPrinterPaperStatus() {
