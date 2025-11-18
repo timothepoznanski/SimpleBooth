@@ -431,8 +431,6 @@ main() {
     log "Update et install ignorés"
   fi
 
-  disable_keyring
-
   if confirm "Configurer écran Waveshare 7\" DSI? (o/N)"; then 
     configure_waveshare
   else 
@@ -456,6 +454,8 @@ main() {
   mkdir -p "$APP_DIR/photos" "$APP_DIR/static" "$APP_DIR/templates"
   chown -R "$INSTALL_USER:$INSTALL_USER" "$APP_DIR"
   ok "Dossiers créés avec succès"
+
+  disable_keyring
   
   echo
   header "✨ INSTALLATION TERMINÉE ✨"
