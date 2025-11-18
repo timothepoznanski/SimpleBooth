@@ -171,6 +171,21 @@ configure_serial() {
   systemctl disable serial-getty@ttyAMA0.service 2>/dev/null || true
   log "Services getty désactivés"
   
+  # Ajouter l'utilisateur au groupe dialout pour accès au port série
+  progress "Ajout de l'utilisateur $INSTALL_USER au groupe dialout..."
+  usermod -a -G dialout "$INSTALL_USER" 2>/dev/null || true
+  log "Utilisateur ajouté au groupe dialout"
+  
+  # Mettre à jour la configuration de l'application pour utiliser ttyAMA0
+  progress "Mise à jour de la configuration de l'imprimante..."
+  if [[ -f "$APP_DIR/config.json" ]]; then
+    # Mettre à jour le port dans config.json existant
+    sed -i 's|"printer_port": "/dev/ttyS0"|"printer_port": "/dev/ttyAMA0"|g' "$APP_DIR/config.json"
+    log "config.json mis à jour avec ttyAMA0"
+  else
+    log "Pas de config.json - les paramètres par défaut seront utilisés"
+  fi
+  
   ok "Port série GPIO configuré avec succès"
   warn "Redémarrage REQUIS pour libérer le port série"
 }

@@ -39,7 +39,7 @@ def check_printer_status():
             }
         
         # Récupérer la configuration de l'imprimante
-        printer_port = config.get('printer_port', '/dev/ttyS0')
+        printer_port = config.get('printer_port', '/dev/ttyAMA0')
         printer_baudrate = config.get('printer_baudrate', 9600)
         
         # Vérifier si l'imprimante est activée
@@ -98,6 +98,7 @@ def detect_serial_ports():
     elif sys.platform.startswith('linux'):  # Linux (Raspberry Pi 4)
         # Vérifier les ports série courants sur Raspberry Pi 4
         common_ports = [
+            '/dev/ttyAMA0', '/dev/ttyAMA1',
             '/dev/ttyS0', '/dev/ttyS1',
             '/dev/ttyUSB0', '/dev/ttyUSB1', '/dev/ttyUSB2',
             '/dev/ttyACM0', '/dev/ttyACM1', '/dev/ttyACM2'
@@ -112,7 +113,7 @@ def detect_serial_ports():
         if sys.platform.startswith('win'):
             available_ports = [('COM1', 'COM1'), ('COM3', 'COM3')]
         else:
-            available_ports = [('/dev/ttyS0', '/dev/ttyS0')]
+            available_ports = [('/dev/ttyAMA0', '/dev/ttyAMA0'), ('/dev/ttyS0', '/dev/ttyS0')]
     
     return available_ports
 
@@ -222,7 +223,7 @@ def print_photo():
         cmd = [venv_python, 'ScriptPythonPOS.py', '--image', photo_path]
         
         # Ajouter les paramètres de port et baudrate
-        printer_port = config.get('printer_port', '/dev/ttyS0')
+        printer_port = config.get('printer_port', '/dev/ttyAMA0')
         printer_baudrate = config.get('printer_baudrate', 9600)
         cmd.extend(['--port', printer_port, '--baudrate', str(printer_baudrate)])
         
@@ -371,7 +372,7 @@ def save_admin_config():
         
         # Configuration de l'imprimante
         config['printer_enabled'] = 'printer_enabled' in request.form
-        config['printer_port'] = request.form.get('printer_port', '/dev/ttyS0')
+        config['printer_port'] = request.form.get('printer_port', '/dev/ttyAMA0')
         
         printer_baudrate = request.form.get('printer_baudrate', '9600').strip()
         try:
@@ -462,7 +463,7 @@ def reprint_photo(filename):
             ]
             
             # Ajouter les paramètres de port et baudrate
-            printer_port = config.get('printer_port', '/dev/ttyS0')
+            printer_port = config.get('printer_port', '/dev/ttyAMA0')
             printer_baudrate = config.get('printer_baudrate', 9600)
             cmd.extend(['--port', printer_port, '--baudrate', str(printer_baudrate)])
             
@@ -685,7 +686,7 @@ def print_startup_info():
         
         from escpos.printer import Serial
         
-        printer_port = config.get('printer_port', '/dev/ttyS0')
+        printer_port = config.get('printer_port', '/dev/ttyAMA0')
         printer_baudrate = config.get('printer_baudrate', 9600)
         
         printer = Serial(printer_port, baudrate=printer_baudrate, timeout=1)
