@@ -89,6 +89,51 @@ install_dependencies() {
   ok "Toutes les dépendances sont installées"
 }
 
+disable_keyring() {
+  step "Désactivation du trousseau GNOME Keyring"
+
+  local keyring_pkgs=(gnome-keyring libpam-gnome-keyring seahorse)
+  local to_purge=()
+
+  for pkg in "${keyring_pkgs[@]}"; do
+    dpkg -l "$pkg" &>/dev/null && to_purge+=("$pkg")
+  done
+
+  if (( ${#to_purge[@]} > 0 )); then
+    progress "Suppression des paquets ${to_purge[*]}..."
+    if ! apt-get purge -y "${to_purge[@]}"; then
+      warn "Impossible de purger tous les paquets keyring"
+    fi
+  else
+    log "Aucun paquet keyring à supprimer"
+  fi
+
+  progress "Neutralisation de l'autostart keyring..."
+  mkdir -p "$AUTOSTART_DIR"
+  local autostart_entries=(gnome-keyring-secrets.desktop gnome-keyring-ssh.desktop gnome-keyring-pkcs11.desktop gnome-keyring-gpg.desktop)
+  for desktop_file in "${autostart_entries[@]}"; do
+    if [[ -f "/etc/xdg/autostart/$desktop_file" ]]; then
+      cat > "$AUTOSTART_DIR/$desktop_file" <<EOF
+[Desktop Entry]
+Type=Application
+Name=${desktop_file%.desktop}
+Exec=/usr/bin/true
+Hidden=true
+X-GNOME-Autostart-enabled=false
+NoDisplay=true
+EOF
+      chown "$INSTALL_USER:$INSTALL_USER" "$AUTOSTART_DIR/$desktop_file"
+    fi
+  done
+
+  progress "Nettoyage des trousseaux existants..."
+  rm -rf "$HOME_DIR/.local/share/keyrings"
+  mkdir -p "$HOME_DIR/.local/share"
+  chown -R "$INSTALL_USER:$INSTALL_USER" "$HOME_DIR/.local"
+
+  ok "GNOME Keyring désactivé"
+}
+
 configure_waveshare() {
   [[ "$WAVE_ENABLED" == false ]] && { log "Configuration Waveshare ignorée"; return; }
   step "Configuration écran Waveshare DSI 7\""
@@ -385,6 +430,8 @@ main() {
   else
     log "Update et install ignorés"
   fi
+
+  disable_keyring
 
   if confirm "Configurer écran Waveshare 7\" DSI? (o/N)"; then 
     configure_waveshare
