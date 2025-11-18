@@ -21,7 +21,8 @@ J'avais un Raspberry Pi 4 qui trainait donc j'ai voulu en faire quelque chose. Q
 - Retrait des effets d'IA.
 - Simplification de la page d'admin + ajout d'un bouton pour supprimer les photos.
 - Retrait du code pour la caméra USB (je n'utilise que la caméra RPI)
-- Ajout de deux boutons sur l'interface pour pouvoir redémarrer l'application depuis l'écran tactile si elle se plantait et un autre bouton pour fermer l'application (par exemple pour aller régler le wifi, connecter le bluetooth) car elle est en pleine écran. 
+- Ajout de deux boutons sur l'interface pour pouvoir redémarrer l'application depuis l'écran tactile si elle se plantait et un autre bouton pour fermer l'application (par exemple pour aller régler le wifi, connecter le bluetooth) car elle est en pleine écran.
+- Séparation en deux services systemd, un pour l'application Flask et un pour la mise en plein écran en utilisant le mode Kiosk de Chromimum.
 - J'ai préféré mettre la malette à l'horizontal pour faire plus appareil photo.
 
 ### Photos du produit terminé
