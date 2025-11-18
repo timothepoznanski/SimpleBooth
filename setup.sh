@@ -125,16 +125,54 @@ configure_serial() {
 
   progress "Configuration du port série..."
   
-  # Activer le port série UART (comme raspi-config)
-  if ! grep -q '^dtparam=uart0=on' "$file"; then
-    echo "dtparam=uart0=on" >> "$file"
-    log "UART activé dans config.txt"
+  # Activer enable_uart pour activer le mini-UART (ttyS0) sur GPIO 14/15
+  if ! grep -q '^enable_uart=1' "$file"; then
+    echo "enable_uart=1" >> "$file"
+    log "enable_uart=1 ajouté dans config.txt"
   else
-    log "UART déjà activé"
+    log "enable_uart déjà activé"
   fi
   
+  # Forcer le mini-UART sur les GPIO 14/15 (si Bluetooth utilise UART0)
+  if ! grep -q '^dtoverlay=miniuart-bt' "$file"; then
+    echo "dtoverlay=miniuart-bt" >> "$file"
+    log "miniuart-bt configuré - Bluetooth utilisera le mini-UART, ttyS0 sera l'UART0"
+  else
+    log "miniuart-bt déjà configuré"
+  fi
+  
+  # Désactiver la console série dans cmdline.txt
+  progress "Désactivation de la console série..."
+  local cmdline_files=(/boot/firmware/cmdline.txt /boot/cmdline.txt)
+  local cmdline_file=""
+  for f in "${cmdline_files[@]}"; do 
+    [[ -f "$f" ]] && { cmdline_file="$f"; break; }
+  done
+  
+  if [[ -n "$cmdline_file" ]]; then
+    # Sauvegarde du fichier original
+    cp "$cmdline_file" "${cmdline_file}.bak.$(date +%Y%m%d)" 2>/dev/null || true
+    log "Sauvegarde créée: ${cmdline_file}.bak.$(date +%Y%m%d)"
+    
+    # Retirer console=serial0,115200 et console=ttyS0,115200
+    sed -i 's/console=serial0,[0-9]\+ //g' "$cmdline_file"
+    sed -i 's/console=ttyS0,[0-9]\+ //g' "$cmdline_file"
+    sed -i 's/console=ttyAMA0,[0-9]\+ //g' "$cmdline_file"
+    log "Console série désactivée dans cmdline.txt"
+  else
+    warn "cmdline.txt introuvable - désactivation manuelle requise"
+  fi
+  
+  # Désactiver le service getty sur les ports série
+  progress "Désactivation des services getty sur ports série..."
+  systemctl stop serial-getty@ttyS0.service 2>/dev/null || true
+  systemctl disable serial-getty@ttyS0.service 2>/dev/null || true
+  systemctl stop serial-getty@ttyAMA0.service 2>/dev/null || true
+  systemctl disable serial-getty@ttyAMA0.service 2>/dev/null || true
+  log "Services getty désactivés"
+  
   ok "Port série GPIO configuré avec succès"
-  warn "Redémarrage requis pour activer le port série"
+  warn "Redémarrage REQUIS pour libérer le port série"
 }
 
 setup_python_env() {
