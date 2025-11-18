@@ -49,20 +49,55 @@ Après redémarrage, vérifier que `/dev/ttyS0` existe :
 ls -l /dev/ttyS0
 ```
 
-## 3. Désactiver le service getty sur le port série
+## 3. Désactiver la console série (CRITIQUE !)
 
-**⚠️ ÉTAPE CRITIQUE - NE PAS OUBLIER ! ⚠️**
+**⚠️ ÉTAPE CRITIQUE - Obligatoire pour éviter les problèmes d'impression ! ⚠️**
 
-Le service `getty` (console série) utilise par défaut le port `/dev/ttyS0`. Si ce service n'est pas désactivé, il va interférer avec l'imprimante et causer des impressions intempestives de "My IP address" ou autres messages parasites.
+Le système Raspberry Pi utilise par défaut le port série `/dev/ttyS0` comme console système. Cela interfère avec l'imprimante et peut causer :
+- Impression qui démarre puis s'arrête immédiatement
+- Décalages dans l'impression
+- Blocages du port série
 
-Désactiver et arrêter le service :
+### Étape 3.1 : Désactiver le service getty
 
 ```bash
 sudo systemctl stop serial-getty@ttyS0.service
 sudo systemctl disable serial-getty@ttyS0.service
+sudo systemctl mask serial-getty@ttyS0.service
 ```
 
-Vérifier que le port est libre :
+Vérifier que le service est bien désactivé :
+
+```bash
+systemctl status serial-getty@ttyS0.service
+```
+
+Résultat attendu : `masked` et `inactive`
+
+### Étape 3.2 : Retirer la console série du kernel
+
+Éditer `/boot/firmware/cmdline.txt` :
+
+```bash
+sudo cp /boot/firmware/cmdline.txt /boot/firmware/cmdline.txt.backup
+sudo nano /boot/firmware/cmdline.txt
+```
+
+**Retirer** `console=serial0,115200` ou `console=ttyS0,115200` de la ligne.
+
+Exemple AVANT :
+```
+console=serial0,115200 console=tty1 root=PARTUUID=...
+```
+
+Exemple APRÈS :
+```
+console=tty1 root=PARTUUID=...
+```
+
+**Important** : Tout doit rester sur UNE SEULE ligne dans ce fichier !
+
+### Étape 3.3 : Vérifier le port est libre
 
 ```bash
 sudo lsof /dev/ttyS0
@@ -70,21 +105,30 @@ sudo lsof /dev/ttyS0
 
 **Résultat attendu :** Aucune sortie (port libre)
 
-**Si vous oubliez cette étape :** L'imprimante imprimera des messages parasites à chaque vérification de statut ou communication.
+**Si cette étape est oubliée :** L'impression commencera puis s'arrêtera après quelques lignes à chaque fois !
 
 ## 4. Configurer les permissions
 
-Ajouter l'utilisateur au groupe `dialout` :
+Ajouter l'utilisateur au groupe `dialout` pour accéder au port série :
 
 ```bash
 sudo usermod -a -G dialout admin
 ```
 
-Configurer les permissions du port :
+**Important** : Se déconnecter et reconnecter (ou redémarrer) pour que le changement prenne effet.
+
+Vérifier l'appartenance au groupe :
 
 ```bash
-sudo chown root:dialout /dev/ttyS0
-sudo chmod 660 /dev/ttyS0
+groups admin
+```
+
+Vous devez voir `dialout` dans la liste.
+
+Configurer les permissions du venv (si nécessaire) :
+
+```bash
+sudo chown -R admin:admin /home/admin/SimpleBooth/venv
 ```
 
 ## 5. Créer une règle udev permanente
@@ -160,6 +204,25 @@ Dans la page admin (http://IP:5000/admin), configurer :
 - **Texte de pied de page** : Personnalisable
 
 ## Dépannage
+
+### L'impression démarre puis s'arrête immédiatement (quelques lignes)
+
+**Cause la plus fréquente** : La console série est encore active sur le port `/dev/ttyS0`.
+
+**Solution** :
+1. Vérifier que le service getty est bien désactivé et masqué :
+   ```bash
+   systemctl status serial-getty@ttyS0.service
+   ```
+   Doit afficher `masked` et `inactive`
+
+2. Vérifier que `console=serial0` n'est pas dans `/boot/firmware/cmdline.txt` :
+   ```bash
+   grep console /boot/firmware/cmdline.txt
+   ```
+   Ne doit PAS contenir `console=serial0` ou `console=ttyS0`
+
+3. Si nécessaire, refaire l'étape 3 complète puis redémarrer
 
 ### L'imprimante ne répond pas
 
