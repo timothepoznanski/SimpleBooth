@@ -1,6 +1,6 @@
 # 📸 Photobooth Raspberry Pi
 
-> **Application Flask pour photobooth tactile avec flux vidéo temps réel et capture instantanée**
+> **Application Flask pour photobooth tactile avec flux vidéo temps réel et capture instantanée** 
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
 ![Flask](https://img.shields.io/badge/Flask-2.3.3-green.svg)
